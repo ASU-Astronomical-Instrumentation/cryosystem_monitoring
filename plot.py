@@ -8,11 +8,17 @@
 
 import sys
 import time
-
+import os
 import numpy as np
+import keithley
+import cryocon
 
 import matplotlib
 matplotlib.use('TKAgg')
+####################################### CONFIG ############################################
+cryoconPort = ""
+keithleyPort = ""
+###########################################################################################
 
 from matplotlib.backends.qt_compat import QtCore, QtWidgets, is_pyqt5
 if is_pyqt5():
@@ -24,6 +30,19 @@ else:
 from matplotlib.figure import Figure
 
 
+def init_cryocon():
+    return cryocon.Cryocon(cryoconPort)
+
+
+def init_keithley():
+    dev_keith = keithley.Keithley2400LV(keithleyPort, True)
+    dev_keith.openPort()
+    dev_keith.initResistanceMeasurement()
+    dev_keith.setSourceCurrent(10.0e-3)
+    dev_keith.turnOutput_ON()
+    return dev_keith
+
+
 class ApplicationWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
@@ -31,24 +50,55 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(self._main)
         layout = QtWidgets.QVBoxLayout(self._main)
 
+        # Ask user for filename to save data to
+        self.filename = QtWidgets.QFileDialog.getSaveFileName(self, "Save Measurement Data", "", "data csv (*.csv)")
+        if self.filename == ("",""):
+            self.filename = "cryoreadout_dat_{}.csv".format(time.time())
+        print("[CRYOREADOUT] save file set to {}".format(self.filename[0]))
+        
+        # Open data file
+        self.dfHandle = None
+        try:
+            self.dfHandle = open(self.filename[0], 'w')
+        except IOError:
+            print("[CRYOREADOUT] ERROR: Can't save to selected file or path")
+            exit()
+        
+        # init devices
+        self.cryo = init_cryocon()
+        self.keith = init_keithley()
 
-        dynamic_canvas = FigureCanvas(Figure(figsize=(5, 3)))
-        layout.addWidget(dynamic_canvas)
+        self.temps = []
+        self.resistances = []
+
+
+        # Create and add canvas + figure to the qt widget
+        restemp_canvas = FigureCanvas(Figure(figsize=(5, 3)))
+        layout.addWidget(restemp_canvas)
         self.addToolBar(QtCore.Qt.BottomToolBarArea,
-                        NavigationToolbar(dynamic_canvas, self))
+                        NavigationToolbar(restemp_canvas, self))
 
 
-        self._dynamic_ax = dynamic_canvas.figure.subplots()
-        self._timer = dynamic_canvas.new_timer(
+        self._restempPlot = restemp_canvas.figure.subplots()
+        self._timer = restemp_canvas.new_timer(
             1000, [(self._update_canvas, (), {})])
         self._timer.start()
 
     def _update_canvas(self):
-        self._dynamic_ax.clear()
-        t = np.linspace(0, 10, 101)
-        # Shift the sinusoid as a function of time.
-        self._dynamic_ax.plot(t, np.sin(t + time.time()))
-        self._dynamic_ax.figure.canvas.draw()
+        self._restempPlot.clear()
+        
+        # Get resistance and add to list
+        bytestring = self.keith.getMeasermentResistance()
+        resistance = float(bytestring[29:41])
+        self.resistances.append(resistance)
+        
+        # Get temperature and add to list
+        tempr = self.cryo.getTemperatures()
+        self.temps.append(tempr)
+
+        # draw plot
+        self._restempPlot.plot(self.temps, self.resistances)
+        self._restempPlot.figure.canvas.draw()
 
 
 if __name__ == "__main__":
