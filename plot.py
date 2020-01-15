@@ -16,8 +16,8 @@ import cryocon
 import matplotlib
 matplotlib.use('TKAgg')
 ####################################### CONFIG ############################################
-cryoconPort = ""
-keithleyPort = ""
+cryoconPort = "/dev/ttyUSB0"
+keithleyPort = "/dev/ttyUSB1"
 ###########################################################################################
 
 from matplotlib.backends.qt_compat import QtCore, QtWidgets, is_pyqt5
@@ -35,7 +35,7 @@ def init_cryocon():
 
 
 def init_keithley():
-    dev_keith = keithley.Keithley2400LV(keithleyPort, True)
+    dev_keith = keithley.Keithley2400LV(keithleyPort, False)
     dev_keith.openPort()
     dev_keith.initResistanceMeasurement()
     dev_keith.setSourceCurrent(10.0e-3)
@@ -54,12 +54,14 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.filename = QtWidgets.QFileDialog.getSaveFileName(self, "Save Measurement Data", "", "data csv (*.csv)")
         if self.filename == ("",""):
             self.filename = "cryoreadout_dat_{}.csv".format(time.time())
-        print("[CRYOREADOUT] save file set to {}".format(self.filename[0]))
+        else:
+            self.filename = self.filename[0] + ".csv"
+        print("[CRYOREADOUT] save file set to {}".format(self.filename))
         
         # Open data file
         self.dfHandle = None
         try:
-            self.dfHandle = open(self.filename[0], 'w')
+            self.dfHandle = open(self.filename, 'w')
         except IOError:
             print("[CRYOREADOUT] ERROR: Can't save to selected file or path")
             exit()
@@ -73,7 +75,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
 
         # Create and add canvas + figure to the qt widget
-        restemp_canvas = FigureCanvas(Figure(figsize=(5, 3)))
+        restemp_canvas = FigureCanvas(Figure(figsize=(8, 16)))
         layout.addWidget(restemp_canvas)
         self.addToolBar(QtCore.Qt.BottomToolBarArea,
                         NavigationToolbar(restemp_canvas, self))
@@ -86,7 +88,9 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
     def _update_canvas(self):
         self._restempPlot.clear()
-        
+    
+        self._restempPlot.set_xlabel("Temperature (K)")
+        self._restempPlot.set_ylabel("Resistance (Ohms)")
         # Get resistance and add to list
         bytestring = self.keith.getMeasermentResistance()
         resistance = float(bytestring[29:41])
@@ -97,12 +101,21 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.temps.append(tempr[0])
 
         # save data
-        self.dfHandle.write("{},{},{}".format(time.time(), resistance, tempr))
+        self.dfHandle.write("{},{},{}\n".format(time.time(), resistance, tempr))
         self.dfHandle.flush()
 
         # draw plot
         self._restempPlot.plot(self.temps, self.resistances)
         self._restempPlot.figure.canvas.draw()
+    
+    
+    def closeup(self):
+        self.cryo.closeConnection()
+        self.keith.turnOutput_OFF()
+        self.keith.closePort()
+        self.dfHandle.close()
+        print("Done")
+
 
 
 if __name__ == "__main__":
