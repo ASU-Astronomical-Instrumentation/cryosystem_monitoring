@@ -94,7 +94,11 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         
         # Get temperature and add to list
         tempr = self.cryo.getTemperatures()
-        self.temps.append(tempr)
+        self.temps.append(tempr[0])
+
+        # save data
+        self.dfHandle.write("{},{},{}".format(time.time(), resistance, tempr))
+        self.dfHandle.flush()
 
         # draw plot
         self._restempPlot.plot(self.temps, self.resistances)
