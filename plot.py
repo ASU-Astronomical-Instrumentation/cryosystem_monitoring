@@ -98,6 +98,8 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         except ValueError:
             print("[CRYOREADOUT] Something went wrong when attempting to convert response to values. Perhaps the connection is invalid?")
             print("Try closing the IPython Kernel and swapping the ports.")
+            self._timer.stop()
+            self.close()
 
         self.resistances.append(resistance)
         
