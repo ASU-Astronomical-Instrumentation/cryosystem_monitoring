@@ -51,6 +51,7 @@ class Keithley2400LV():
 
     def closePort(self):
         self.serialDevice.close()
+        print("[Keithley] Closed Serial Connection")
 
 
     def turnOutput_ON(self):

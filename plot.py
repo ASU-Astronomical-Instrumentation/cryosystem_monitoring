@@ -83,7 +83,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
         self._restempPlot = restemp_canvas.figure.subplots()
         self._timer = restemp_canvas.new_timer(
-            1000, [(self._update_canvas, (), {})])
+            1250, [(self._update_canvas, (), {})])
         self._timer.start()
 
     def _update_canvas(self):
@@ -123,4 +123,4 @@ if __name__ == "__main__":
     app = ApplicationWindow()
     app.show()
     qapp.exec_()
-    
+    app.closeup()
