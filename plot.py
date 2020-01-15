@@ -1,8 +1,9 @@
 '''
-author: Cody Roberson
-date: 1/13/2020
-description: This is the manager for all things plot related
-Based off of an example from https://matplotlib.org/3.1.1/gallery/user_interfaces/embedding_in_qt_sgskip.html
+    author: Cody Roberson
+    date: 1/13/2020
+    description: This is the main executable for the readout software. Here, we use the keithley and cryocon interfaces to gather our data
+    and plot it.
+    Based off of an example from https://matplotlib.org/3.1.1/gallery/user_interfaces/embedding_in_qt_sgskip.html
 '''
 
 import sys
