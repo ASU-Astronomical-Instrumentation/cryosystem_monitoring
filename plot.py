@@ -100,6 +100,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
             print("Try closing the IPython Kernel and swapping the ports.")
             self._timer.stop()
             self.close()
+            return
 
         self.resistances.append(resistance)
         
