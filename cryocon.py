@@ -10,7 +10,9 @@ import sys
 import os
 import time
 
-
+'''
+    This class is everything pertaining to the Cryocon device. 
+'''
 class Cryocon():
     def __init__(self, port):
         # create a serial object
