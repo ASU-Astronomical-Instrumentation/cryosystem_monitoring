@@ -14,7 +14,6 @@ import keithley
 import cryocon
 
 import matplotlib
-matplotlib.use('TKAgg')
 ####################################### CONFIG ############################################
 cryoconPort = "/dev/ttyUSB0"
 keithleyPort = "/dev/ttyUSB1"
