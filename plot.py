@@ -74,7 +74,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
 
         # Create and add canvas + figure to the qt widget
-        restemp_canvas = FigureCanvas(Figure(figsize=(8, 16)))
+        restemp_canvas = FigureCanvas(Figure(figsize=(16, 10)))
         layout.addWidget(restemp_canvas)
         self.addToolBar(QtCore.Qt.BottomToolBarArea,
                         NavigationToolbar(restemp_canvas, self))
@@ -92,7 +92,13 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self._restempPlot.set_ylabel("Resistance (Ohms)")
         # Get resistance and add to list
         bytestring = self.keith.getMeasermentResistance()
-        resistance = float(bytestring[29:41])
+        resistance = 0
+        try:
+            float(bytestring[29:41])
+        except ValueError:
+            print("[CRYOREADOUT] Something went wrong when attempting to convert response to values. Perhaps the connection is invalid?")
+            print("Try closing the IPython Kernel and swapping the ports.")
+
         self.resistances.append(resistance)
         
         # Get temperature and add to list
