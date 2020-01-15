@@ -94,7 +94,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         bytestring = self.keith.getMeasermentResistance()
         resistance = 0
         try:
-            float(bytestring[29:41])
+            resistance = float(bytestring[29:41])
         except ValueError:
             print("[CRYOREADOUT] Something went wrong when attempting to convert response to values. Perhaps the connection is invalid?")
             print("Try closing the IPython Kernel and swapping the ports.")
