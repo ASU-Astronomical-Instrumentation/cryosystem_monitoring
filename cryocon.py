@@ -33,18 +33,19 @@ class Cryocon():
         if self.ser.is_open:
             try:
                 # Get Temperature for Input A
-                self.ser.write('INPUT? A\n'.encode("ASCII"))
+                self.ser.write(b'INPUT? A\n')
                 time.sleep(0.010)
                 TempA = float(self.ser.readline())
 
                 # Get temperature for Input B
-                self.ser.write('INPUT? B\n'.encode("ASCII"))
+                self.ser.write(b'INPUT? B\n')
                 time.sleep(0.010)
                 TempB = float(self.ser.readline())
 
                 return TempA,TempB
             except ValueError:
-                print("[Cryocon] Error: Data was not returned in a format that could be converted to a float.")
+                print("[Cryocon] Error: Data was not returned in a format that could be converted to a float.\
+                        perhaps the cryocon was not connected to the right port?")
         else:
             print("[Cryocon] Error: Not connected to Cryocon")
         return (0,0)
