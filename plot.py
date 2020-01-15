@@ -101,7 +101,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self.temps.append(tempr[0])
 
         # save data
-        self.dfHandle.write("{},{},{}\n".format(time.time(), resistance, tempr))
+        self.dfHandle.write("{},{},{}\n".format(time.time(), resistance, tempr[0]))
         self.dfHandle.flush()
 
         # draw plot
