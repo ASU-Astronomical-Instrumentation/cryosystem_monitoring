@@ -100,7 +100,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         tempr = self.cryo.getTemperatures()
         self.temps.append(tempr[0])
 
-        # save data
+        # save data as time, resistance, temperature
         self.dfHandle.write("{},{},{}\n".format(time.time(), resistance, tempr[0]))
         self.dfHandle.flush()
 
