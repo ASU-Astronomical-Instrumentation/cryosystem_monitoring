@@ -63,7 +63,7 @@ def main():
         print("Error, please use python 3")
         exit()
     
-    dev = Cryocon("/dev/ttyUSB0")
+    dev = Cryocon("COM8")
     print("Temperatures are {}".format(dev.getTemperatures()))
     dev.closeConnection()
 

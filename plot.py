@@ -12,11 +12,11 @@ import os
 import numpy as np
 import keithley
 import cryocon
-
+import time
 import matplotlib
 ####################################### CONFIG ############################################
-cryoconPort = "/dev/ttyUSB0"
-keithleyPort = "/dev/ttyUSB1"
+cryoconPort = "COM8"
+keithleyPort = "COM4"
 ###########################################################################################
 
 from matplotlib.backends.qt_compat import QtCore, QtWidgets, is_pyqt5
@@ -37,10 +37,9 @@ def init_keithley():
     dev_keith = keithley.Keithley2400LV(keithleyPort, False)
     dev_keith.openPort()
     dev_keith.initResistanceMeasurement()
-    dev_keith.setSourceCurrent(10.0e-3)
+    dev_keith.setSourceCurrent(1e-5) # 1.0e-7 For Nanos
     dev_keith.turnOutput_ON()
     return dev_keith
-
 
 class ApplicationWindow(QtWidgets.QMainWindow):
     def __init__(self):
@@ -68,28 +67,36 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         # init devices
         self.cryo = init_cryocon()
         self.keith = init_keithley()
-
+        self.times = []
         self.temps = []
+        self.temps2 = []
         self.resistances = []
 
 
         # Create and add canvas + figure to the qt widget
-        restemp_canvas = FigureCanvas(Figure(figsize=(16, 10)))
+        restemp_canvas = FigureCanvas(Figure(figsize=(14, 8)))
         layout.addWidget(restemp_canvas)
         self.addToolBar(QtCore.Qt.BottomToolBarArea,
                         NavigationToolbar(restemp_canvas, self))
-
+        tcanvas = FigureCanvas(Figure(figsize=(14, 8)))
+        layout.addWidget(tcanvas)
+        self.addToolBar(QtCore.Qt.BottomToolBarArea,
+                        NavigationToolbar(tcanvas, self))
 
         self._restempPlot = restemp_canvas.figure.subplots()
+        self._tempPlot = tcanvas.figure.subplots()
         self._timer = restemp_canvas.new_timer(
             1250, [(self._update_canvas, (), {})])
         self._timer.start()
 
     def _update_canvas(self):
         self._restempPlot.clear()
-    
+        self._tempPlot.clear()
         self._restempPlot.set_xlabel("Temperature (K)")
         self._restempPlot.set_ylabel("Resistance (Ohms)")
+        self._tempPlot.set_xlabel("Time (Seconds)")
+        self._tempPlot.set_ylabel("Temperature (K)")
+        
         # Get resistance and add to list
         bytestring = self.keith.getMeasermentResistance()
         resistance = 0
@@ -107,15 +114,20 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         # Get temperature and add to list
         tempr = self.cryo.getTemperatures()
         self.temps.append(tempr[0])
-
+        self.temps2.append(tempr[1])
+        currentTime = time.time()
+        self.times.append(currentTime)
         # save data as time, resistance, temperature
         self.dfHandle.write("{},{},{}\n".format(time.time(), resistance, tempr[0]))
+        print ("{},{},{},{}\n".format(time.time(), resistance, tempr[0], tempr[1]))
         self.dfHandle.flush()
 
         # draw plot
         self._restempPlot.plot(self.temps, self.resistances)
+        self._tempPlot.plot(self.times, self.temps, 'r', self.times, self.temps2, 'b')
         self._restempPlot.figure.canvas.draw()
-    
+        self._tempPlot.figure.canvas.draw()
+
     
     def closeup(self):
         self.cryo.closeConnection()

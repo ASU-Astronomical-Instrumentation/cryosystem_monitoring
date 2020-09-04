@@ -114,13 +114,13 @@ class Keithley2400LV():
     def initResistanceMeasurement(self):
         self.serialDevice.write(b":SENSE:FUNC \"RES\" \n") # Set the Keithley to measure resistance
         self.serialDevice.write(b':SENS:RES:MODE MAN \n') # Set the ohm mode to manual
-        self.serialDevice.write(b':SOUR:CURR:RANG 0.1 \n') # Set the current range to 0.1
-        self.serialDevice.write(b':SENSE:RES:RANG 0.01 \n')# set the resistance range to 0.01 Ohms
-        self.serialDevice.write(b':SENSE:RES:OCOM ON \n') # enable ohms offset compensation
+        self.serialDevice.write(b':SOUR:CURR:RANG 0.1 \n') # Set the current range to 0.1  (For Nanoe set to 1.0e-5) 
+        self.serialDevice.write(b':SENSE:RES:RANG 0.01 \n')# set the resistance range to 0.01 Ohms  (For Nanoe set to 6.0e3)
+        self.serialDevice.write(b':SENSE:RES:OCOM ON \n') # enable ohms offset compensation  (For Nanoe set to OFF)
         self.serialDevice.write(b':SENS:VOLT:PROT 2 \n') # set voltage protection to 2 Volts
-        self.serialDevice.write(b':SENS:CURR:PROT 0.01 \n') # set currnet protection to 0.01
+        self.serialDevice.write(b':SENS:CURR:PROT 0.01 \n') # set currnet protection to 0.01  (For Nanoe comment out line)
         self.serialDevice.write(b':SOUR:FUNC CURR \n') # Set source mode to current
-        self.serialDevice.write(b':SYST:RSEN ON \n') # ON for 4-wire measurments
+        self.serialDevice.write(b':SYST:RSEN ON \n') # ON for 4-wire measurments (For Nanoe set to OFF)
 
     def getMeasermentResistance(self):
             self.serialDevice.write(b':READ?\n')
@@ -148,10 +148,10 @@ class Keithley2400LV():
 '''
 def main():
     print("[KEITHLEY] Begin Test")
-    keithley2400LV = Keithley2400LV("/dev/ttyUSB0", True)
+    keithley2400LV = Keithley2400LV("COM4", True)
     keithley2400LV.openPort()
     keithley2400LV.initResistanceMeasurement()
-    keithley2400LV.setSourceCurrent(10.0e-3)
+    keithley2400LV.setSourceCurrent(7.0e-6)
     print("[KEITHLEY] Commanded settings")
 
     # Confirm before turning the thing on
