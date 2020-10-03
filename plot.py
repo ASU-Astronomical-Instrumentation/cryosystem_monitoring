@@ -88,7 +88,7 @@ class ApplicationWindow(QtWidgets.QMainWindow):
         self._timer = restemp_canvas.new_timer(
             1250, [(self._update_canvas, (), {})])
         self._timer.start()
-
+ 
     def _update_canvas(self):
         self._restempPlot.clear()
         self._tempPlot.clear()
