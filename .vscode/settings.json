@@ -1,6 +1,3 @@
 {
-    "python.pythonPath": "/home/cody/anaconda3/envs/dev/bin/python",
-    "python.linting.pylintEnabled": true,
-    "python.linting.mypyEnabled": false,
-    "python.linting.enabled": true
+    "python.pythonPath": "C:\\ProgramData\\Anaconda3\\python.exe"
 }
