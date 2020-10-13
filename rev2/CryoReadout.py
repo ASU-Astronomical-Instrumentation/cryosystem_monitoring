@@ -46,12 +46,66 @@ class serialPortsWindow(tk.Toplevel):
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.win = serialPortsWindow(self)
+        # self.win = serialPortsWindow(self)
+        pad = 10
 
+        self.labelframe_loop1 = tk.LabelFrame(self, text="LOOP 1", padx = pad, pady = pad)
+        self.labelframe_loop2 = tk.LabelFrame(self, text="LOOP 2", padx = pad, pady = pad)
+        self.labelframe_usercontrols = tk.LabelFrame(self, text = "CONTROLS", padx = pad, pady = pad)
+        self.labelframe_loop1.grid(row = 1, column = 1, padx = pad, pady = pad)
+        self.labelframe_loop2.grid(row = 2, column = 1, padx = pad, pady = pad)
+        self.labelframe_usercontrols.grid(row = 3, column = 1, padx = pad, pady = pad)
+        
+        # LOOP 1 LABELS
+        tk.Label(self.labelframe_loop1, text="source: ").grid(row = 1, column = 1)
+        tk.Label(self.labelframe_loop1, text="setpoint: ").grid(row = 2, column = 1)
+        tk.Label(self.labelframe_loop1, text="type: ").grid(row = 3, column = 1)
+        tk.Label(self.labelframe_loop1, text="max-setpt: ").grid(row = 4, column = 1)
+        tk.Label(self.labelframe_loop1, text="resistance: ").grid(row = 5, column = 1)
+        tk.Label(self.labelframe_loop1, text="ramprate: ").grid(row = 6, column = 1)
+        tk.Label(self.labelframe_loop1, text="range: ").grid(row = 7, column = 1)
+        tk.Label(self.labelframe_loop1, text="pgain: ").grid(row = 8, column = 1)
+        tk.Label(self.labelframe_loop1, text="igain: ").grid(row = 9, column = 1)
+        tk.Label(self.labelframe_loop1, text="dgain: ").grid(row = 10, column = 1)
+        tk.Label(self.labelframe_loop1, text="pman: ").grid(row = 11, column = 1)
+        tk.Label(self.labelframe_loop1, text="max-power: ").grid(row = 12, column = 1)
+        tk.Label(self.labelframe_loop1, text="outputpower: ").grid(row = 13, column = 1)
+        tk.Label(self.labelframe_loop1, text="table-number: ").grid(row = 14, column = 1)
 
+        # LOOP 1 ENTRIES
+        self.loop1_entries = []
+        for i in range(1, 15):
+            entry = tk.Entry(self.labelframe_loop1, width = 12, state=tk.DISABLED)
+            entry.grid(row = i, column = 2)
+            self.loop1_entries.append(entry)
+
+        # LOOP 2 LABELS
+        tk.Label(self.labelframe_loop2, text="source: ").grid(row = 1, column = 1)
+        tk.Label(self.labelframe_loop2, text="setpoint: ").grid(row = 2, column = 1)
+        tk.Label(self.labelframe_loop2, text="type: ").grid(row = 3, column = 1)
+        tk.Label(self.labelframe_loop2, text="max-setpt: ").grid(row = 4, column = 1)
+        tk.Label(self.labelframe_loop2, text="resistance: ").grid(row = 5, column = 1)
+        tk.Label(self.labelframe_loop2, text="ramprate: ").grid(row = 6, column = 1)
+        tk.Label(self.labelframe_loop2, text="range: ").grid(row = 7, column = 1)
+        tk.Label(self.labelframe_loop2, text="pgain: ").grid(row = 8, column = 1)
+        tk.Label(self.labelframe_loop2, text="igain: ").grid(row = 9, column = 1)
+        tk.Label(self.labelframe_loop2, text="dgain: ").grid(row = 10, column = 1)
+        tk.Label(self.labelframe_loop2, text="pman: ").grid(row = 11, column = 1)
+        tk.Label(self.labelframe_loop2, text="max-power: ").grid(row = 12, column = 1)
+        tk.Label(self.labelframe_loop2, text="outputpower: ").grid(row = 13, column = 1)
+        tk.Label(self.labelframe_loop2, text="table-number: ").grid(row = 14, column = 1)
+
+        # LOOP 2 ENTRIES
+        self.loop2_entries = []
+        for i in range(1, 15):
+            entry = tk.Entry(self.labelframe_loop2, width = 12, state=tk.DISABLED)
+            entry.grid(row = i, column = 2)
+            self.loop2_entries.append(entry)
+
+        # USER CONTROLS
+        
 
 if __name__=='__main__':
     app = App()
     app.mainloop()
 
-        
