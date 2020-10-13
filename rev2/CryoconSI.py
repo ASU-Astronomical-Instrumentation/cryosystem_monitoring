@@ -58,6 +58,102 @@ class Cryocon():
         else:
             print("[Cryocon] Serial Connection was already closed")
 
+
+    def getLoopSettings(self, interf : serial.Serial, loop : bytes):
+        """
+        Prints all relevant settings for either loop 1 or loop 2
+        of the cryocon.
+
+        Parameters
+        ----------
+        interf : serial.Serial
+            serial connection to cryocon.
+        loop : bytes
+            This is really an internal param. This should either be b'1'
+            or b'2' for loop 1 and loop 2
+
+        Returns
+        -------
+        list[] size 14 components
+
+        """
+        settings = []
+        try:
+            interf.write(b'LOOP ' + loop + b':SOURCE? \n')
+            time.sleep(0.010)
+            temp = interf.readline()
+            settings.append(temp.decode('utf-8'))
+            
+            interf.write(b'LOOP '+loop+ b':SETPT? \n')
+            time.sleep(0.010)
+            temp = interf.readline()
+            settings.append(temp.decode('utf-8'))
+            
+            interf.write(b'LOOP '+loop+ b':TYPE? \n')
+            time.sleep(0.010)
+            temp = interf.readline()
+            settings.append(temp.decode('utf-8'))
+            
+            interf.write(b'LOOP '+loop+ b':MAXSET? \n')
+            time.sleep(0.010)
+            temp = interf.readline()
+            settings.append(temp.decode('utf-8'))
+            
+            interf.write(b'LOOP '+loop+ b':LOAD? \n')
+            time.sleep(0.010)
+            temp = interf.readline()
+            settings.append(temp.decode('utf-8'))
+            
+            interf.write(b'LOOP '+loop+ b':RATE? \n')
+            time.sleep(0.010)
+            temp = interf.readline()
+            settings.append(temp.decode('utf-8'))
+            
+            interf.write(b'LOOP '+loop+ b':RANGE? \n')
+            time.sleep(0.010)
+            temp = interf.readline()
+            settings.append(temp.decode('utf-8'))
+            
+            interf.write(b'LOOP '+loop+ b':PGAIN? \n')
+            time.sleep(0.010)
+            temp = interf.readline()
+            settings.append(temp.decode('utf-8'))
+            
+            interf.write(b'LOOP '+loop+ b':IGAIN? \n')
+            time.sleep(0.010)
+            temp = interf.readline()
+            settings.append(temp.decode('utf-8'))
+            
+            interf.write(b'LOOP '+loop+ b':DGAIN? \n')
+            time.sleep(0.010)
+            temp = interf.readline()
+            settings.append(temp.decode('utf-8'))
+            
+            interf.write(b'LOOP '+loop+ b':PMAN? \n')
+            time.sleep(0.010)
+            temp = interf.readline()
+            settings.append(temp.decode('utf-8'))
+            
+            interf.write(b'LOOP '+loop+ b':MAXPWR? \n')
+            time.sleep(0.010)
+            temp = interf.readline()
+            settings.append(temp.decode('utf-8'))
+            
+            interf.write(b'LOOP '+loop+ b':OUTPWR? \n')
+            time.sleep(0.010)
+            temp = interf.readline()
+            settings.append(temp.decode('utf-8'))
+            
+            interf.write(b'LOOP '+loop+ b':TABLE? \n')
+            time.sleep(0.010)
+            temp = interf.readline()
+            settings.append(temp.decode('utf-8'))
+
+        except (OSError, serial.SerialException):
+            print("getLoopSettings() -> Port error, couldn't connect to the cryocon")
+        
+        return settings
+
 def main():
     if sys.version_info < (3,0):
         print("Error, please use python 3")

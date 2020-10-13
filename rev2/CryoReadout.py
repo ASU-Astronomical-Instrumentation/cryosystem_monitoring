@@ -8,6 +8,7 @@ Created on Sat Oct  3 16:41:50 2020
 
 import tkinter as tk
 from tkinter import ttk
+from tkinter import font
 from SerialHelper import serial_ports
 
 
@@ -54,8 +55,9 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
         # self.win = serialPortsWindow(self)
-        pad = 10
-
+        pad = 5
+        default_font = font.nametofont("TkTextFont")
+        default_font.configure(size=12)
         self.graphFrame = tk.Frame(self)
         self.controlFrame = tk.Frame(self)
         self.controlFrame.grid(row = 1, column = 1, padx = pad, pady = pad)
@@ -77,8 +79,9 @@ class App(tk.Tk):
         
         ## place holder figure.
 
-        f = Figure(figsize=(10,5), dpi=100)
-        a = f.add_subplot(111)
+        f = Figure(figsize=(10,10), dpi=100)
+        a = f.add_subplot(211)
+        b = f.add_subplot(212)
         a.plot([1,2,3,4,5,6,7,8],[5,6,1,3,8,9,3,5])
         canvas = FigureCanvasTkAgg(f, self.graphFrame)
         canvas.get_tk_widget().grid(row=1, column = 1)
@@ -158,6 +161,17 @@ class App(tk.Tk):
         
         self.usercontrols_button_stop = tk.Button(self.labelframe_usercontrols, text="STOP LOOPS")
         self.usercontrols_button_stop.grid(row=3, column=2, pady=pad)
+
+
+    def binding_loop_changeParams(self, loop_number : int):
+        pass
+
+
+    def binding_loop_saveParams(self, loop_number : int):
+        pass
+    
+
+
 
 if __name__=='__main__':
     app = App()
