@@ -47,7 +47,7 @@ class Keithley2400LV():
             self.serialDevice.open()
         except (OSError, serial.SerialException):
             print("[KEITHLEY] Serial Error, please ensure that the device is conected and the correct port is selected.")
-            exit()
+            exit(0)
 
     def closePort(self):
         self.serialDevice.close()

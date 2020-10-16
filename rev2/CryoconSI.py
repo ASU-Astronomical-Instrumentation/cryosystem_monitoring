@@ -17,15 +17,16 @@ class Cryocon():
     def __init__(self, port):
         # create a serial object
         self.ser = serial.Serial()
-
+        self.status = "dcd"
         # Configure and attempt to open the serial port
         try:
-           self.ser.baudrate = 9600
-           self.ser.port = port
-           self.ser.open()
-
+            self.ser.baudrate = 9600
+            self.ser.port = port
+            self.ser.open()
+            self.status = "connected"
         except (OSError, serial.SerialException):
             print("[Cryocon] Serial Error, please ensure that the device is conected and the correct port is selected.")
+            self.status = "dcd"
 
     def getTemperatures(self):
         TempA = None
@@ -88,7 +89,7 @@ class Cryocon():
 
         return rampstatus
 
-    def setLoopSettings(self, loop : bytes, settings : list) -> None:
+    def setLoopSettings(self, loop : bytes, settings : list):
         """
         Prints all relevant settings for either loop 1 or loop 2
         of the cryocon.

@@ -7,8 +7,8 @@ Created on Sat Oct  3 16:41:50 2020
 """
 
 ######################################################################################################
-cryoconPORT = "COM4"
-
+cryoconPORT = ""
+keithleyPort = ""
 ######################################################################################################
 
 import tkinter as tk
@@ -16,9 +16,20 @@ from tkinter import ttk
 from tkinter import font
 from SerialHelper import serial_ports
 import CryoconSI
+import KeithlySI
+import time
 
-#cc = CryoconSI.Cryocon(cryoconPORT)
+cc = CryoconSI.Cryocon(cryoconPORT)
+keith = KeithlySI.Keithley2400LV(keithleyPort, False)
+keith.openPort()
+keith.initResistanceMeasurement()
+keith.setSourceCurrent(1e-5) # 1.0e-7 For Nanos
+keith.turnOutput_ON()
 
+# TODO: ENABLE ME FOR PORT PROTEC
+if cc.status == "dcd":
+    print("ERROR, COULDNT CONNECT TO PORT")
+    exit(0)
 
 import matplotlib
 matplotlib.use("TkAgg")
@@ -62,6 +73,8 @@ class serialPortsWindow(tk.Toplevel):
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
+
+        # GUI SECTION
         # self.win = serialPortsWindow(self)
         pad = 5
         default_font = font.nametofont("TkTextFont")
@@ -85,14 +98,12 @@ class App(tk.Tk):
         self.labelframe_loop2.grid(row = 3, column = 1, padx = pad, pady = pad)
         self.labelframe_usercontrols.grid(row = 4, column = 1, padx = pad, pady = pad)
         
-        ## place holder figure.
-
-        # f = Figure(figsize=(10,10), dpi=100)
-        # a = f.add_subplot(211)
-        # b = f.add_subplot(212)
-        # a.plot([1,2,3,4,5,6,7,8],[5,6,1,3,8,9,3,5])
-        # canvas = FigureCanvasTkAgg(f, self.graphFrame)
-        # canvas.get_tk_widget().grid(row=1, column = 1)
+        ## place holder figure until a redraw update can occur
+        self.mainFigure = Figure(figsize=(10,10), dpi=100)
+        self.fig_subplotA = self.mainFigure.add_subplot(211)
+        self.fig_subplotB = self.mainFigure.add_subplot(212)
+        canvas = FigureCanvasTkAgg(self.mainFigure, self.graphFrame)
+        canvas.get_tk_widget().grid(row=1, column = 1)
 
 
         # LOOP 1 LABELS
@@ -158,10 +169,10 @@ class App(tk.Tk):
         self.label_tempb.grid(row=2, column=2)
 
         # User Controls
-        self.usercontrols_button_viewpid = tk.Button(self.labelframe_usercontrols, text="VIEW PID TABLE")
+        self.usercontrols_button_viewpid = tk.Button(self.labelframe_usercontrols, text="VIEW PID TABLE (NOT IMTD)", state=tk.DISABLED)
         self.usercontrols_button_viewpid.grid(row=1, column=1, pady=pad)
 
-        self.usercontrols_button_uploadpid = tk.Button(self.labelframe_usercontrols, text="UPLOAD PID TABLE")
+        self.usercontrols_button_uploadpid = tk.Button(self.labelframe_usercontrols, text="UPLOAD PID TABLE (NOT IMTD)", state=tk.DISABLED)
         self.usercontrols_button_uploadpid.grid(row=1, column=2, pady=pad)
         
         self.usercontrols_button_start = tk.Button(self.labelframe_usercontrols, text="START LOOPS")
@@ -174,6 +185,15 @@ class App(tk.Tk):
         self.usercontrols_button_refresh.grid(row=4, column=1, pady=pad, padx=12)
 
 
+        # non gui section
+        filename = "cryoreadout_dat_{}.csv".format(time.time())
+        self.fileHandle = open(filename, "a")
+        self.times = []
+        self.tempA = []
+        self.tempB = []
+        self.resistances = []
+
+
 
     def binding_loop1_changeParams(self):
         self.loop1_button_edit.configure(state=tk.DISABLED)
@@ -182,10 +202,15 @@ class App(tk.Tk):
         self.loop1_button_done.configure(state=tk.NORMAL)
 
     def binding_loop1_saveParams(self):
+        vals = []
         self.loop1_button_edit.configure(state=tk.NORMAL)
         for i in self.loop1_entries:
+            vals.append(i.get())
             i.configure(state=tk.DISABLED)
         self.loop1_button_done.configure(state=tk.DISABLED)
+
+        # Push them values forward
+        cc.setLoopSettings(b'1', vals)
 
     def binding_loop2_changeParams(self):
         self.loop2_button_edit.configure(state=tk.DISABLED)
@@ -194,17 +219,26 @@ class App(tk.Tk):
         self.loop2_button_done.configure(state=tk.NORMAL)
 
     def binding_loop2_saveParams(self):
+        vals = []
         self.loop2_button_edit.configure(state=tk.NORMAL)
         for i in self.loop2_entries:
+            vals.append(i.get())
             i.configure(state=tk.DISABLED)
         self.loop2_button_done.configure(state=tk.DISABLED)
 
+        # Push them values forward
+        cc.setLoopSettings(b'2', vals)
 
     def binding_refresh_loopData(self):
-        # loop1data = cc.getLoopSettings(b'1')
-        # loop2data = cc.getLoopSettings(b'2')
-        loop1data = [1,2,3,4,5,6,7,8,9,10,11,12,13,14]
-        loop2data = [15,16,17,18,19,20,21,22,23,24,25,26,27,28]
+        loop1data = cc.getLoopSettings(b'1')
+        loop2data = cc.getLoopSettings(b'2')
+
+        if len(loop1data) < 15 or len(loop2data) < 15:
+            tk.messagebox.showerror(title="ERROR, SERIAL PORT PROBLEMS", message="ERROR, length of data pulled was less than expected")
+            self.destroy()
+
+        # loop1data = [1,2,3,4,5,6,7,8,9,10,11,12,13,14]
+        # loop2data = [15,16,17,18,19,20,21,22,23,24,25,26,27,28]
         for i in range(0, 14):
             self.loop1_entries[i].configure(state=tk.NORMAL)
             self.loop1_entries[i].delete(0, tk.END)
@@ -215,9 +249,51 @@ class App(tk.Tk):
             self.loop2_entries[i].delete(0, tk.END)
             self.loop2_entries[i].insert(0, loop2data[i])
             self.loop2_entries[i].configure(state=tk.DISABLED)
-    
+
+
     def poll_and_plot(self):
-        pass
+        """
+        The bread and butter of this software is to get the temperature stats and redraw the figures here.
+        """
+        self.fig_subplotA.clear()
+        self.fig_subplotB.clear()
+
+        self.fig_subplotA.set_xlabel("Time (Seconds)")
+        self.fig_subplotA.set_ylabel("Temperature (K)")
+
+        self.fig_subplotB.set_xlabel("Temperature (K)")
+        self.fig_subplotB.set_ylabel("Resistance (Ohms)")
+        
+        # Get resistance and add to list
+        bytestring = keith.getMeasermentResistance()
+        resistance = 0
+        try:
+            resistance = float(bytestring[29:41])
+        except ValueError:
+            print("[CRYOREADOUT] Something went wrong when attempting to convert response to values. Perhaps the connection is invalid?")
+            print("Try closing the IPython Kernel and swapping the ports.")
+            self._timer.stop()
+            self.close()
+            return
+
+        self.resistances.append(resistance)
+
+        # SAMPLE TEMPERATURES
+        tempr = cc.getTemperatures()
+        self.tempA.append(tempr[0])
+        self.tempB.append(tempr[1])
+        currentTime = time.time()
+        self.times.append(currentTime)
+
+
+        # DO PLOT
+        self.fig_subplotB.plot(self.tempA, self.resistances)
+        self.fig_subplotA.plot(self.times, self.tempA, 'r', self.times, self.tempB, 'b')
+        self.fig_subplotB.figure.canvas.draw()
+        self.fig_subplotA.figure.canvas.draw()
+
+        # No we need to schedule this again
+        self.after(1000, self.poll_and_plot)
 
 
 if __name__=='__main__':
