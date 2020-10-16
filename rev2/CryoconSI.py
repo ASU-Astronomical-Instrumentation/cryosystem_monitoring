@@ -57,9 +57,111 @@ class Cryocon():
             print("[Cryocon] Closed serial connection")
         else:
             print("[Cryocon] Serial Connection was already closed")
+# 
+
+    def gethtrCurr(self):
+        htrCurr = []
+        self.ser.write(b'LOOP 1:HTRREAD? \n')
+        time.sleep(0.010)
+        temp = self.ser.readline()
+        htrCurr.append(temp.decode('utf-8'))
+
+        self.ser.write(b'LOOP 2:HTRREAD? \n')
+        time.sleep(0.010)
+        temp = self.ser.readline()
+        htrCurr.append(temp.decode('utf-8'))
+
+        return htrCurr
 
 
-    def getLoopSettings(self, interf : serial.Serial, loop : bytes):
+    def getRampStatus(self):
+        rampstatus = []
+        self.ser.write(b'LOOP 1:RAMP? \n')
+        time.sleep(0.010)
+        temp = self.ser.readline()
+        rampstatus.append(temp.decode('utf-8'))
+
+        self.ser.write(b'LOOP 2:RAMP? \n')
+        time.sleep(0.010)
+        temp = self.ser.readline()
+        rampstatus.append(temp.decode('utf-8'))
+
+        return rampstatus
+
+    def setLoopSettings(self, loop : bytes, settings : list) -> None:
+        """
+        Prints all relevant settings for either loop 1 or loop 2
+        of the cryocon.
+
+        Parameters
+        ----------
+        interf : serial.Serial
+            serial connection to cryocon.
+        settings : list[string]
+            List of settings in order as get/set
+        loop : bytes
+            This is really an internal param. This should either be b'1'
+            or b'2' for loop 1 and loop 2
+
+        Returns
+        -------
+        list[] size 14 components
+
+        """
+        param = []
+        for s in settings:
+            param.append(s.encode(encoding="ASCII"))
+        try:
+            self.ser.write(b'LOOP ' + loop + b':SOURCE ' + param[0] + '\n')
+            time.sleep(0.010)
+
+            self.ser.write(b'LOOP '+loop+ b':SETPT ' + param[1] + '\n')
+            time.sleep(0.010)
+
+            self.ser.write(b'LOOP '+loop+ b':TYPE ' + param[2] + ' \n')
+            time.sleep(0.010)
+
+            self.ser.write(b'LOOP '+loop+ b':MAXSET ' + param[3] + ' \n')
+            time.sleep(0.010)
+
+            self.ser.write(b'LOOP '+loop+ b':LOAD' + param[4] + ' \n')
+            time.sleep(0.010)
+
+            self.ser.write(b'LOOP '+loop+ b':RATE' + param[5] + ' \n')
+            time.sleep(0.010)
+            
+            self.ser.write(b'LOOP '+loop+ b':RANGE ' + param[6] + ' \n')
+            time.sleep(0.010)
+            
+            self.ser.write(b'LOOP '+loop+ b':PGAIN ' + param[7] + ' \n')
+            time.sleep(0.010)
+            
+            self.ser.write(b'LOOP '+loop+ b':IGAIN ' + param[8] + ' \n')
+            time.sleep(0.010)
+
+            self.ser.write(b'LOOP '+loop+ b':DGAIN ' + param[9] + ' \n')
+            time.sleep(0.010)
+            
+            self.ser.write(b'LOOP '+loop+ b':PMAN ' + param[10] + ' \n')
+            time.sleep(0.010)
+
+            self.ser.write(b'LOOP '+loop+ b':MAXPWR ' + param[11] + ' \n')
+            time.sleep(0.010)
+            
+            # self.ser.write(b'LOOP '+loop+ b':OUTPWR ' + param[12] + ' \n')
+            # time.sleep(0.010)  NOT SETTABLE
+            
+            self.ser.write(b'LOOP '+loop+ b':TABLEIX ' + param[13] + ' \n')
+            time.sleep(0.010)
+
+
+        except (OSError, serial.SerialException):
+            print("getLoopSettings() -> Port error, couldn't connect to the cryocon")
+        
+        return None
+
+
+    def getLoopSettings(self, loop : bytes):
         """
         Prints all relevant settings for either loop 1 or loop 2
         of the cryocon.
@@ -79,74 +181,74 @@ class Cryocon():
         """
         settings = []
         try:
-            interf.write(b'LOOP ' + loop + b':SOURCE? \n')
+            self.ser.write(b'LOOP ' + loop + b':SOURCE? \n')
             time.sleep(0.010)
-            temp = interf.readline()
+            temp = self.ser.readline()
             settings.append(temp.decode('utf-8'))
             
-            interf.write(b'LOOP '+loop+ b':SETPT? \n')
+            self.ser.write(b'LOOP '+loop+ b':SETPT? \n')
             time.sleep(0.010)
-            temp = interf.readline()
+            temp = self.ser.readline()
             settings.append(temp.decode('utf-8'))
             
-            interf.write(b'LOOP '+loop+ b':TYPE? \n')
+            self.ser.write(b'LOOP '+loop+ b':TYPE? \n')
             time.sleep(0.010)
-            temp = interf.readline()
+            temp = self.ser.readline()
             settings.append(temp.decode('utf-8'))
             
-            interf.write(b'LOOP '+loop+ b':MAXSET? \n')
+            self.ser.write(b'LOOP '+loop+ b':MAXSET? \n')
             time.sleep(0.010)
-            temp = interf.readline()
+            temp = self.ser.readline()
             settings.append(temp.decode('utf-8'))
             
-            interf.write(b'LOOP '+loop+ b':LOAD? \n')
+            self.ser.write(b'LOOP '+loop+ b':LOAD? \n')
             time.sleep(0.010)
-            temp = interf.readline()
+            temp = self.ser.readline()
             settings.append(temp.decode('utf-8'))
             
-            interf.write(b'LOOP '+loop+ b':RATE? \n')
+            self.ser.write(b'LOOP '+loop+ b':RATE? \n')
             time.sleep(0.010)
-            temp = interf.readline()
+            temp = self.ser.readline()
             settings.append(temp.decode('utf-8'))
             
-            interf.write(b'LOOP '+loop+ b':RANGE? \n')
+            self.ser.write(b'LOOP '+loop+ b':RANGE? \n')
             time.sleep(0.010)
-            temp = interf.readline()
+            temp = self.ser.readline()
             settings.append(temp.decode('utf-8'))
             
-            interf.write(b'LOOP '+loop+ b':PGAIN? \n')
+            self.ser.write(b'LOOP '+loop+ b':PGAIN? \n')
             time.sleep(0.010)
-            temp = interf.readline()
+            temp = self.ser.readline()
             settings.append(temp.decode('utf-8'))
             
-            interf.write(b'LOOP '+loop+ b':IGAIN? \n')
+            self.ser.write(b'LOOP '+loop+ b':IGAIN? \n')
             time.sleep(0.010)
-            temp = interf.readline()
+            temp = self.ser.readline()
             settings.append(temp.decode('utf-8'))
             
-            interf.write(b'LOOP '+loop+ b':DGAIN? \n')
+            self.ser.write(b'LOOP '+loop+ b':DGAIN? \n')
             time.sleep(0.010)
-            temp = interf.readline()
+            temp = self.ser.readline()
             settings.append(temp.decode('utf-8'))
             
-            interf.write(b'LOOP '+loop+ b':PMAN? \n')
+            self.ser.write(b'LOOP '+loop+ b':PMAN? \n')
             time.sleep(0.010)
-            temp = interf.readline()
+            temp = self.ser.readline()
             settings.append(temp.decode('utf-8'))
             
-            interf.write(b'LOOP '+loop+ b':MAXPWR? \n')
+            self.ser.write(b'LOOP '+loop+ b':MAXPWR? \n')
             time.sleep(0.010)
-            temp = interf.readline()
+            temp = self.ser.readline()
             settings.append(temp.decode('utf-8'))
             
-            interf.write(b'LOOP '+loop+ b':OUTPWR? \n')
+            self.ser.write(b'LOOP '+loop+ b':OUTPWR? \n')
             time.sleep(0.010)
-            temp = interf.readline()
+            temp = self.ser.readline()
             settings.append(temp.decode('utf-8'))
             
-            interf.write(b'LOOP '+loop+ b':TABLE? \n')
+            self.ser.write(b'LOOP '+loop+ b':TABLE? \n')
             time.sleep(0.010)
-            temp = interf.readline()
+            temp = self.ser.readline()
             settings.append(temp.decode('utf-8'))
 
         except (OSError, serial.SerialException):

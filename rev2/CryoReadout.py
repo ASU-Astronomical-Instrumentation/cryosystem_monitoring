@@ -6,10 +6,18 @@ Created on Sat Oct  3 16:41:50 2020
 @author: cody
 """
 
+######################################################################################################
+cryoconPORT = "COM4"
+
+######################################################################################################
+
 import tkinter as tk
 from tkinter import ttk
 from tkinter import font
 from SerialHelper import serial_ports
+import CryoconSI
+
+#cc = CryoconSI.Cryocon(cryoconPORT)
 
 
 import matplotlib
@@ -17,7 +25,7 @@ matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 
-
+#  NOT IMPLEMENTED
 class serialPortsWindow(tk.Toplevel):
     def __init__(self, parent):
         super().__init__(parent)
@@ -79,12 +87,12 @@ class App(tk.Tk):
         
         ## place holder figure.
 
-        f = Figure(figsize=(10,10), dpi=100)
-        a = f.add_subplot(211)
-        b = f.add_subplot(212)
-        a.plot([1,2,3,4,5,6,7,8],[5,6,1,3,8,9,3,5])
-        canvas = FigureCanvasTkAgg(f, self.graphFrame)
-        canvas.get_tk_widget().grid(row=1, column = 1)
+        # f = Figure(figsize=(10,10), dpi=100)
+        # a = f.add_subplot(211)
+        # b = f.add_subplot(212)
+        # a.plot([1,2,3,4,5,6,7,8],[5,6,1,3,8,9,3,5])
+        # canvas = FigureCanvasTkAgg(f, self.graphFrame)
+        # canvas.get_tk_widget().grid(row=1, column = 1)
 
 
         # LOOP 1 LABELS
@@ -102,9 +110,9 @@ class App(tk.Tk):
         tk.Label(self.labelframe_loop1, text="max-power: ").grid(row = 12, column = 1)
         tk.Label(self.labelframe_loop1, text="outputpower: ").grid(row = 13, column = 1)
         tk.Label(self.labelframe_loop1, text="table-number: ").grid(row = 14, column = 1)
-        self.loop1_button_edit = tk.Button(self.labelframe_loop1, text="EDIT")
+        self.loop1_button_edit = tk.Button(self.labelframe_loop1, text="EDIT", command=self.binding_loop1_changeParams)
         self.loop1_button_edit.grid(row = 15, column=1, pady = pad)
-        self.loop1_button_done = tk.Button(self.labelframe_loop1, text="DONE", state = tk.DISABLED)
+        self.loop1_button_done = tk.Button(self.labelframe_loop1, text="DONE", state = tk.DISABLED, command=self.binding_loop1_saveParams)
         self.loop1_button_done.grid(row = 15, column=2, pady = pad)
 
         # LOOP 1 ENTRIES
@@ -162,15 +170,54 @@ class App(tk.Tk):
         self.usercontrols_button_stop = tk.Button(self.labelframe_usercontrols, text="STOP LOOPS")
         self.usercontrols_button_stop.grid(row=3, column=2, pady=pad)
 
+        self.usercontrols_button_refresh = tk.Button(self.labelframe_usercontrols, text="REFRESH LOOOPS", command=self.binding_refresh_loopData)
+        self.usercontrols_button_refresh.grid(row=4, column=1, pady=pad, padx=12)
 
-    def binding_loop_changeParams(self, loop_number : int):
-        pass
 
 
-    def binding_loop_saveParams(self, loop_number : int):
-        pass
+    def binding_loop1_changeParams(self):
+        self.loop1_button_edit.configure(state=tk.DISABLED)
+        for i in self.loop1_entries:
+            i.configure(state=tk.NORMAL)
+        self.loop1_button_done.configure(state=tk.NORMAL)
+
+    def binding_loop1_saveParams(self):
+        self.loop1_button_edit.configure(state=tk.NORMAL)
+        for i in self.loop1_entries:
+            i.configure(state=tk.DISABLED)
+        self.loop1_button_done.configure(state=tk.DISABLED)
+
+    def binding_loop2_changeParams(self):
+        self.loop2_button_edit.configure(state=tk.DISABLED)
+        for i in self.loop2_entries:
+            i.configure(state=tk.NORMAL)
+        self.loop2_button_done.configure(state=tk.NORMAL)
+
+    def binding_loop2_saveParams(self):
+        self.loop2_button_edit.configure(state=tk.NORMAL)
+        for i in self.loop2_entries:
+            i.configure(state=tk.DISABLED)
+        self.loop2_button_done.configure(state=tk.DISABLED)
+
+
+    def binding_refresh_loopData(self):
+        # loop1data = cc.getLoopSettings(b'1')
+        # loop2data = cc.getLoopSettings(b'2')
+        loop1data = [1,2,3,4,5,6,7,8,9,10,11,12,13,14]
+        loop2data = [15,16,17,18,19,20,21,22,23,24,25,26,27,28]
+        for i in range(0, 14):
+            self.loop1_entries[i].configure(state=tk.NORMAL)
+            self.loop1_entries[i].delete(0, tk.END)
+            self.loop1_entries[i].insert(0, loop1data[i])
+            self.loop1_entries[i].configure(state=tk.DISABLED)
+
+            self.loop2_entries[i].configure(state=tk.NORMAL)
+            self.loop2_entries[i].delete(0, tk.END)
+            self.loop2_entries[i].insert(0, loop2data[i])
+            self.loop2_entries[i].configure(state=tk.DISABLED)
     
-
+    def poll_and_plot(self):
+        pass
 
 
 if __name__=='__main__':
