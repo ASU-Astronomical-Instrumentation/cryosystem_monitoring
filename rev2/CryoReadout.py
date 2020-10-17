@@ -7,8 +7,8 @@ Created on Sat Oct  3 16:41:50 2020
 """
 
 ######################################################################################################
-cryoconPORT = ""
-keithleyPort = ""
+cryoconPORT = "/dev/ttyUSB0"
+keithleyPort = "/dev/ttyUSB1"
 ######################################################################################################
 
 import tkinter as tk
@@ -148,9 +148,9 @@ class App(tk.Tk):
         tk.Label(self.labelframe_loop2, text="max-power: ").grid(row = 12, column = 1)
         tk.Label(self.labelframe_loop2, text="outputpower: ").grid(row = 13, column = 1)
         tk.Label(self.labelframe_loop2, text="table-number: ").grid(row = 14, column = 1)
-        self.loop2_button_edit = tk.Button(self.labelframe_loop2, text="EDIT")
+        self.loop2_button_edit = tk.Button(self.labelframe_loop2, text="EDIT", command=self.binding_loop2_changeParams)
         self.loop2_button_edit.grid(row = 15, column=1, pady = pad)
-        self.loop2_button_done = tk.Button(self.labelframe_loop2, text="DONE", state = tk.DISABLED)
+        self.loop2_button_done = tk.Button(self.labelframe_loop2, text="DONE", state = tk.DISABLED, command=self.binding_loop2_saveParams)
         self.loop2_button_done.grid(row = 15, column=2, pady = pad)
 
         # LOOP 2 ENTRIES
@@ -169,16 +169,16 @@ class App(tk.Tk):
         self.label_tempb.grid(row=2, column=2)
 
         # User Controls
-        self.usercontrols_button_viewpid = tk.Button(self.labelframe_usercontrols, text="VIEW PID TABLE (NOT IMTD)", state=tk.DISABLED)
+        self.usercontrols_button_viewpid = tk.Button(self.labelframe_usercontrols, text="VIEW PID TABLE", command=self.binding_getPIDTable0)
         self.usercontrols_button_viewpid.grid(row=1, column=1, pady=pad)
 
-        self.usercontrols_button_uploadpid = tk.Button(self.labelframe_usercontrols, text="UPLOAD PID TABLE (NOT IMTD)", state=tk.DISABLED)
+        self.usercontrols_button_uploadpid = tk.Button(self.labelframe_usercontrols, text="UPLOAD PID TABLE", command=self.binding_uploadPID0)
         self.usercontrols_button_uploadpid.grid(row=1, column=2, pady=pad)
         
-        self.usercontrols_button_start = tk.Button(self.labelframe_usercontrols, text="START LOOPS")
+        self.usercontrols_button_start = tk.Button(self.labelframe_usercontrols, text="START LOOPS", command=self.binding_start_loops)
         self.usercontrols_button_start.grid(row=3, column=1, pady = pad)
         
-        self.usercontrols_button_stop = tk.Button(self.labelframe_usercontrols, text="STOP LOOPS")
+        self.usercontrols_button_stop = tk.Button(self.labelframe_usercontrols, text="STOP LOOPS", command=self.binding_stop_loops)
         self.usercontrols_button_stop.grid(row=3, column=2, pady=pad)
 
         self.usercontrols_button_refresh = tk.Button(self.labelframe_usercontrols, text="REFRESH LOOOPS", command=self.binding_refresh_loopData)
@@ -193,6 +193,18 @@ class App(tk.Tk):
         self.tempB = []
         self.resistances = []
 
+        # here goes nothing
+        self.poll_and_plot()
+
+    def binding_uploadPID0(self):
+        cc.writePIDTABLE()
+    
+    def binding_getPIDTable0(self):
+        table = cc.getPIDTableSettings()
+        file = open("downloadedPIDTable_0_{}.txt".format(time.time()), "a")
+        file.write(table)
+        file.close()
+        tk.messagebox.showinfo(title="TABLE 0", message=table)
 
 
     def binding_loop1_changeParams(self):
@@ -229,13 +241,21 @@ class App(tk.Tk):
         # Push them values forward
         cc.setLoopSettings(b'2', vals)
 
+    def binding_start_loops(self):
+        cc.startLoops()
+
+
+    def binding_stop_loops(self):
+        cc.stopLoops()
+
+
     def binding_refresh_loopData(self):
         loop1data = cc.getLoopSettings(b'1')
         loop2data = cc.getLoopSettings(b'2')
 
-        if len(loop1data) < 15 or len(loop2data) < 15:
+        if len(loop1data) < 14 or len(loop2data) < 14:
             tk.messagebox.showerror(title="ERROR, SERIAL PORT PROBLEMS", message="ERROR, length of data pulled was less than expected")
-            self.destroy()
+
 
         # loop1data = [1,2,3,4,5,6,7,8,9,10,11,12,13,14]
         # loop2data = [15,16,17,18,19,20,21,22,23,24,25,26,27,28]
@@ -243,12 +263,12 @@ class App(tk.Tk):
             self.loop1_entries[i].configure(state=tk.NORMAL)
             self.loop1_entries[i].delete(0, tk.END)
             self.loop1_entries[i].insert(0, loop1data[i])
-            self.loop1_entries[i].configure(state=tk.DISABLED)
+            self.loop1_entries[i].configure(state=tk.DISABLED, foreground="black")
 
             self.loop2_entries[i].configure(state=tk.NORMAL)
             self.loop2_entries[i].delete(0, tk.END)
             self.loop2_entries[i].insert(0, loop2data[i])
-            self.loop2_entries[i].configure(state=tk.DISABLED)
+            self.loop2_entries[i].configure(state=tk.DISABLED, foreground="black")
 
 
     def poll_and_plot(self):
@@ -284,6 +304,8 @@ class App(tk.Tk):
         self.tempB.append(tempr[1])
         currentTime = time.time()
         self.times.append(currentTime)
+        self.label_tempa.configure(text="{}".format(tempr[0]))
+        self.label_tempb.configure(text="{}".format(tempr[1]))
 
 
         # DO PLOT
@@ -292,8 +314,15 @@ class App(tk.Tk):
         self.fig_subplotB.figure.canvas.draw()
         self.fig_subplotA.figure.canvas.draw()
 
+        
+        # save to file and print
+        self.fileHandle.write("{},{},{}\n".format(time.time(), resistance, tempr[0]))
+        print ("{},{},{},{}\n".format(time.time(), resistance, tempr[0], tempr[1]))
+        self.fileHandle.flush()
+
+
         # No we need to schedule this again
-        self.after(1000, self.poll_and_plot)
+        self.after(2000, self.poll_and_plot)
 
 
 if __name__=='__main__':

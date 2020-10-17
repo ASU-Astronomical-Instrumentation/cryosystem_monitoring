@@ -23,6 +23,7 @@ class Cryocon():
             self.ser.baudrate = 9600
             self.ser.port = port
             self.ser.open()
+            self.ser.timeout = 0.6
             self.status = "connected"
         except (OSError, serial.SerialException):
             print("[Cryocon] Serial Error, please ensure that the device is conected and the correct port is selected.")
@@ -111,48 +112,49 @@ class Cryocon():
         """
         param = []
         for s in settings:
-            param.append(s.encode(encoding="ASCII"))
+            g = str.encode(s, "ASCII")
+            param.append(g)
         try:
-            self.ser.write(b'LOOP ' + loop + b':SOURCE ' + param[0] + '\n')
+            self.ser.write(b'LOOP ' + loop + b':SOURCE ' + param[0] + b' \n')
             time.sleep(0.010)
 
-            self.ser.write(b'LOOP '+loop+ b':SETPT ' + param[1] + '\n')
+            self.ser.write(b'LOOP '+loop+ b':SETPT ' + param[1] + b' \n')
             time.sleep(0.010)
 
-            self.ser.write(b'LOOP '+loop+ b':TYPE ' + param[2] + ' \n')
+            self.ser.write(b'LOOP '+loop+ b':TYPE ' + param[2] + b' \n')
             time.sleep(0.010)
 
-            self.ser.write(b'LOOP '+loop+ b':MAXSET ' + param[3] + ' \n')
+            self.ser.write(b'LOOP '+loop+ b':MAXSET ' + param[3] + b' \n')
             time.sleep(0.010)
 
-            self.ser.write(b'LOOP '+loop+ b':LOAD' + param[4] + ' \n')
+            self.ser.write(b'LOOP '+loop+ b':LOAD' + param[4] + b' \n')
             time.sleep(0.010)
 
-            self.ser.write(b'LOOP '+loop+ b':RATE' + param[5] + ' \n')
+            self.ser.write(b'LOOP '+loop+ b':RATE' + param[5] + b' \n')
             time.sleep(0.010)
             
-            self.ser.write(b'LOOP '+loop+ b':RANGE ' + param[6] + ' \n')
+            self.ser.write(b'LOOP '+loop+ b':RANGE ' + param[6] + b' \n')
             time.sleep(0.010)
             
-            self.ser.write(b'LOOP '+loop+ b':PGAIN ' + param[7] + ' \n')
+            self.ser.write(b'LOOP '+loop+ b':PGAIN ' + param[7] + b' \n')
             time.sleep(0.010)
             
-            self.ser.write(b'LOOP '+loop+ b':IGAIN ' + param[8] + ' \n')
+            self.ser.write(b'LOOP '+loop+ b':IGAIN ' + param[8] + b' \n')
             time.sleep(0.010)
 
-            self.ser.write(b'LOOP '+loop+ b':DGAIN ' + param[9] + ' \n')
+            self.ser.write(b'LOOP '+loop+ b':DGAIN ' + param[9] + b' \n')
             time.sleep(0.010)
             
-            self.ser.write(b'LOOP '+loop+ b':PMAN ' + param[10] + ' \n')
+            self.ser.write(b'LOOP '+loop+ b':PMAN ' + param[10] + b' \n')
             time.sleep(0.010)
 
-            self.ser.write(b'LOOP '+loop+ b':MAXPWR ' + param[11] + ' \n')
+            self.ser.write(b'LOOP '+loop+ b':MAXPWR ' + param[11] + b' \n')
             time.sleep(0.010)
             
-            # self.ser.write(b'LOOP '+loop+ b':OUTPWR ' + param[12] + ' \n')
+            # self.ser.write(b'LOOP '+loop+ b':OUTPWR ' + param[12] + b' \n')
             # time.sleep(0.010)  NOT SETTABLE
             
-            self.ser.write(b'LOOP '+loop+ b':TABLEIX ' + param[13] + ' \n')
+            self.ser.write(b'LOOP '+loop+ b':TABLEIX ' + param[13] + b' \n')
             time.sleep(0.010)
 
 
@@ -161,6 +163,64 @@ class Cryocon():
         
         return None
 
+    def __getReply(self):
+        temp = self.ser.readline()
+        temp = temp.decode('utf-8')
+        temp = temp.strip()
+        return temp
+    
+    def startLoops(self):
+        try:
+            self.ser.write(b'CONTROL \n')
+        except (OSError, serial.SerialException):
+            print("getLoopSettings() -> Port error, couldn't connect to the cryocon")
+
+    def stopLoops(self):
+        try:
+            self.ser.write(b'STOP \n')
+        except (OSError, serial.SerialException):
+            print("getLoopSettings() -> Port error, couldn't connect to the cryocon")
+
+
+    def __parsePIDTable(self, filename : str):
+        if filename == None:
+            filename = 'pidtable.cfg'
+        file = open(filename, "r")
+        inputdata = file.readlines()
+        file.close()
+
+        if len(inputdata) > 17:
+            print("ERROR, too many rows in configuration file. Format should be 'table name' followed by up to 16 pid table rows")
+        elif len(inputdata) <= 1:
+            print("ERROR: Not enough data. Format should be 'table name' followed by up to 16 pid table rows")
+        else:
+            cmd = b'PIDTABLE 0:TABLE\n '
+            for line in inputdata:
+                cmd = cmd + (line.encode('ascii'))
+            cmd = cmd + (b'\n;')
+            return cmd
+
+
+    def writePIDTABLE(self):
+        self.ser.write(self.__parsePIDTable(None))
+
+
+    def getPIDTableSettings(self) -> str:
+        self.ser.write(b'PIDTABLE 0:NENTRY?\n')
+        temp = self.ser.readline()
+        # print("PID TABLE NUMBER OF ENTRIES: {}".format(temp.decode('utf-8')))
+
+        self.ser.write(b'PIDTABLE 0:TABLE?\n')
+        timeout = self.ser.timeout
+        self.ser.timeout = 1
+        temp = self.ser.readlines()
+        dat = ""
+        for line in temp:
+            # print(line.decode('utf-8'))
+            dat = dat + line.decode('utf-8')
+
+        self.ser.timeout = timeout
+        return dat
 
     def getLoopSettings(self, loop : bytes):
         """
@@ -183,74 +243,46 @@ class Cryocon():
         settings = []
         try:
             self.ser.write(b'LOOP ' + loop + b':SOURCE? \n')
-            time.sleep(0.010)
-            temp = self.ser.readline()
-            settings.append(temp.decode('utf-8'))
+            settings.append(self.__getReply())
             
             self.ser.write(b'LOOP '+loop+ b':SETPT? \n')
-            time.sleep(0.010)
-            temp = self.ser.readline()
-            settings.append(temp.decode('utf-8'))
+            settings.append(self.__getReply())
             
             self.ser.write(b'LOOP '+loop+ b':TYPE? \n')
-            time.sleep(0.010)
-            temp = self.ser.readline()
-            settings.append(temp.decode('utf-8'))
+            settings.append(self.__getReply())
             
             self.ser.write(b'LOOP '+loop+ b':MAXSET? \n')
-            time.sleep(0.010)
-            temp = self.ser.readline()
-            settings.append(temp.decode('utf-8'))
+            settings.append(self.__getReply())
             
             self.ser.write(b'LOOP '+loop+ b':LOAD? \n')
-            time.sleep(0.010)
-            temp = self.ser.readline()
-            settings.append(temp.decode('utf-8'))
+            settings.append(self.__getReply())
             
             self.ser.write(b'LOOP '+loop+ b':RATE? \n')
-            time.sleep(0.010)
-            temp = self.ser.readline()
-            settings.append(temp.decode('utf-8'))
+            settings.append(self.__getReply())
             
             self.ser.write(b'LOOP '+loop+ b':RANGE? \n')
-            time.sleep(0.010)
-            temp = self.ser.readline()
-            settings.append(temp.decode('utf-8'))
+            settings.append(self.__getReply())
             
             self.ser.write(b'LOOP '+loop+ b':PGAIN? \n')
-            time.sleep(0.010)
-            temp = self.ser.readline()
-            settings.append(temp.decode('utf-8'))
+            settings.append(self.__getReply())
             
             self.ser.write(b'LOOP '+loop+ b':IGAIN? \n')
-            time.sleep(0.010)
-            temp = self.ser.readline()
-            settings.append(temp.decode('utf-8'))
+            settings.append(self.__getReply())
             
             self.ser.write(b'LOOP '+loop+ b':DGAIN? \n')
-            time.sleep(0.010)
-            temp = self.ser.readline()
-            settings.append(temp.decode('utf-8'))
+            settings.append(self.__getReply())
             
             self.ser.write(b'LOOP '+loop+ b':PMAN? \n')
-            time.sleep(0.010)
-            temp = self.ser.readline()
-            settings.append(temp.decode('utf-8'))
+            settings.append(self.__getReply())
             
             self.ser.write(b'LOOP '+loop+ b':MAXPWR? \n')
-            time.sleep(0.010)
-            temp = self.ser.readline()
-            settings.append(temp.decode('utf-8'))
+            settings.append(self.__getReply())
             
             self.ser.write(b'LOOP '+loop+ b':OUTPWR? \n')
-            time.sleep(0.010)
-            temp = self.ser.readline()
-            settings.append(temp.decode('utf-8'))
+            settings.append(self.__getReply())
             
             self.ser.write(b'LOOP '+loop+ b':TABLE? \n')
-            time.sleep(0.010)
-            temp = self.ser.readline()
-            settings.append(temp.decode('utf-8'))
+            settings.append(self.__getReply())
 
         except (OSError, serial.SerialException):
             print("getLoopSettings() -> Port error, couldn't connect to the cryocon")
